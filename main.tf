@@ -2,15 +2,36 @@ provider "aws" {
   region = "us-east-2"
 }
 
+# resource "aws_lambda_function" "se_lambda" {
+#   function_name = "APIGateway_Lambda_Function_${var.env}"
+#   role          = aws_iam_role.lambda_execution_role.arn
+
+#   handler = "main"
+#   runtime = "go1.x"
+
+#   filename         = "lambda_function_payload.zip"
+#   source_code_hash = filebase64sha256("${path.module}/lambda/function.zip")
+
+#   environment {
+#     variables = {
+#       SECRET_ID = var.secretID
+#     }
+#   }
+# }
+
+data "archive_file" "lambda" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/lambda.py"
+  output_path = "${path.module}/lambda/function.zip"
+}
+
 resource "aws_lambda_function" "se_lambda" {
-  function_name = "APIGateway_Lambda_Function_${var.env}"
-  role          = aws_iam_role.lambda_execution_role.arn
-
-  handler = "main"
-  runtime = "go1.x"
-
-  filename         = "lambda_function_payload.zip"
-  source_code_hash = filebase64sha256("lambda/function.zip")
+  function_name    = "APIGateway_Lambda_Function_${var.env}"
+  role             = aws_iam_role.lambda_execution_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  filename         = data.archive_file.lambda.output_path
+  source_code_hash = filebase64sha256(data.archive_file.lambda.output_path)
 
   environment {
     variables = {
@@ -18,6 +39,7 @@ resource "aws_lambda_function" "se_lambda" {
     }
   }
 }
+
 
 resource "aws_api_gateway_rest_api" "se_api" {
   name = "APILambdaV1-${var.env}"
@@ -68,13 +90,11 @@ resource "aws_api_gateway_usage_plan" "se_usage_plan" {
 
   api_stages {
     api_id = aws_api_gateway_rest_api.se_api.id
-    stage  = "dev"
+    stage  = aws_api_gateway_stage.se_stage.stage_name
   }
-
-  api_stages {
-    api_id = aws_api_gateway_rest_api.se_api.id
-    stage  = "prod"
-  }
+  depends_on = [
+    aws_api_gateway_stage.se_stage
+  ]
 }
 
 resource "aws_api_gateway_usage_plan_key" "se_usage_plan_key" {
@@ -91,4 +111,11 @@ resource "aws_api_gateway_deployment" "dev_deployment" {
   depends_on = [
     aws_api_gateway_integration.lambda_integration
   ]
+}
+
+
+resource "aws_api_gateway_stage" "se_stage" {
+  deployment_id = aws_api_gateway_deployment.se_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.se_api.id
+  stage_name    = var.env
 }
