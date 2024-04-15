@@ -1,0 +1,9 @@
+# Ignore Terraform plan files
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+.terraform/
+
+# Ignore compiled Go binaries
+lambda/main
+lambda/*.zip
