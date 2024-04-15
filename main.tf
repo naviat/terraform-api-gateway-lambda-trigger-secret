@@ -104,10 +104,12 @@ resource "aws_api_gateway_usage_plan_key" "se_usage_plan_key" {
 }
 
 # Deployment to Dev
-resource "aws_api_gateway_deployment" "dev_deployment" {
+resource "aws_api_gateway_deployment" "api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.se_api.id
-  stage_name  = var.env
-
+  //stage_name  = var.env
+  lifecycle {
+    create_before_destroy = true
+  }
   depends_on = [
     aws_api_gateway_integration.lambda_integration
   ]
@@ -115,7 +117,7 @@ resource "aws_api_gateway_deployment" "dev_deployment" {
 
 
 resource "aws_api_gateway_stage" "se_stage" {
-  deployment_id = aws_api_gateway_deployment.se_deployment.id
+  deployment_id = aws_api_gateway_deployment.api_deployment.id
   rest_api_id   = aws_api_gateway_rest_api.se_api.id
   stage_name    = var.env
 }
