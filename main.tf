@@ -28,7 +28,7 @@ data "archive_file" "lambda" {
 resource "aws_lambda_function" "se_lambda" {
   function_name    = "APIGateway_Lambda_Function_${var.env}"
   role             = aws_iam_role.lambda_execution_role.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "lambda.lambda_handler"
   runtime          = "python3.12"
   filename         = data.archive_file.lambda.output_path
   source_code_hash = filebase64sha256(data.archive_file.lambda.output_path)
