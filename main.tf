@@ -2,23 +2,6 @@ provider "aws" {
   region = "us-east-2"
 }
 
-# resource "aws_lambda_function" "se_lambda" {
-#   function_name = "APIGateway_Lambda_Function_${var.env}"
-#   role          = aws_iam_role.lambda_execution_role.arn
-
-#   handler = "main"
-#   runtime = "go1.x"
-
-#   filename         = "lambda_function_payload.zip"
-#   source_code_hash = filebase64sha256("${path.module}/lambda/function.zip")
-
-#   environment {
-#     variables = {
-#       SECRET_ID = var.secretID
-#     }
-#   }
-# }
-
 data "archive_file" "lambda" {
   type        = "zip"
   source_file = "${path.module}/lambda/lambda.py"
